@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>StillInLife</title>
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; background: #000; color: #d8cfc0;
+    font-family: Georgia, "Times New Roman", serif; overflow: hidden; }
+  header {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 10;
+    padding: 14px 20px; display: flex; align-items: baseline; gap: 14px;
+    background: linear-gradient(#000 55%, rgba(0,0,0,0)); pointer-events: none;
+  }
+  header h1 { font-size: 20px; font-weight: normal; letter-spacing: .06em; }
+  header .count { font-size: 13px; color: #7d7264; }
+  .rail {
+    height: 100vh; overflow-x: auto; overflow-y: hidden;
+    -webkit-overflow-scrolling: touch; scrollbar-width: none;
+  }
+  .rail::-webkit-scrollbar { display: none; }
+  .track { display: flex; align-items: center; height: 100vh; width: max-content; }
+  figure { position: relative; flex: 0 0 auto; height: 100vh; }
+  figure img { display: block; height: 100vh; width: auto; }
+  figcaption {
+    position: absolute; left: 0; right: 0; bottom: 0;
+    padding: 40px 22px 20px; font-size: 13px; line-height: 1.5;
+    background: linear-gradient(rgba(0,0,0,0), rgba(0,0,0,.82));
+    opacity: 0; transition: opacity .25s;
+  }
+  figure:hover figcaption { opacity: 1; }
+  figcaption .obj { font-size: 15px; color: #e8dcc8; }
+  figcaption .date { color: #8a7d6c; letter-spacing: .05em; }
+  figcaption .sym { color: #b3a892; margin-top: 4px; font-style: italic; }
+  .empty { position: absolute; inset: 0; display: flex; align-items: center;
+    justify-content: center; text-align: center; color: #6d6355; padding: 40px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>StillInLife</h1>
+  <span class="count" id="count"></span>
+</header>
+<div class="rail" id="rail"><div class="track" id="track"></div></div>
+
+<script>
+(() => {
+  const rail = document.getElementById('rail');
+  const track = document.getElementById('track');
+  const countEl = document.getElementById('count');
+
+  const SPEED = 14;            // px al secondo (lento) — la tavola scorre a sinistra
+  const RESUME_DELAY = 4000;   // ms prima che l'auto-scroll riprenda dopo il drag
+  const REFRESH_MS = 10 * 60 * 1000; // ricontrolla il manifest ogni 10 min
+
+  let seqWidth = 0;            // larghezza di UNA sequenza (le fette sono duplicate)
+  let signature = '';         // per capire se sono arrivate fette nuove
+  let paused = false;
+  let resumeTimer = null;
+  let lastTs = 0;
+
+  function figureFor(slice) {
+    const fig = document.createElement('figure');
+    const img = document.createElement('img');
+    img.src = slice.file;
+    img.alt = slice.object || slice.date;
+    const cap = document.createElement('figcaption');
+    cap.innerHTML =
+      `<div class="date">${slice.date}</div>` +
+      `<div class="obj">${slice.object || ''}</div>` +
+      (slice.symbolism ? `<div class="sym">${slice.symbolism}</div>` : '');
+    fig.append(img, cap);
+    return fig;
+  }
+
+  function measure() {
+    // Larghezza di una sequenza = metà del track (contenuto duplicato x2).
+    seqWidth = track.scrollWidth / 2;
+  }
+
+  function build(slices) {
+    track.innerHTML = '';
+    // Due copie identiche in fila → loop senza fine: quando lo scroll supera
+    // una sequenza, si torna indietro di seqWidth senza salto visibile.
+    for (let copy = 0; copy < 2; copy++) {
+      for (const s of slices) track.append(figureFor(s));
+    }
+    countEl.textContent = slices.length + (slices.length === 1 ? ' fetta' : ' fette');
+
+    const imgs = Array.from(track.querySelectorAll('img'));
+    let left = imgs.length;
+    if (left === 0) { measure(); return; }
+    const done = () => { if (--left === 0) measure(); };
+    for (const im of imgs) {
+      if (im.complete) done();
+      else { im.addEventListener('load', done); im.addEventListener('error', done); }
+    }
+  }
+
+  async function loadManifest() {
+    try {
+      const res = await fetch('state/manifest.json', { cache: 'no-store' });
+      const data = await res.json();
+      data.sort((a, b) => a.file.localeCompare(b.file)); // date then -a before -b
+      return data;
+    } catch (e) { return []; }
+  }
+
+  function render(slices) {
+    if (!slices.length) {
+      track.innerHTML = '';
+      rail.insertAdjacentHTML('beforeend',
+        '<p class="empty">La tavola è ancora vuota.<br>La prima fetta arriva domani alle 9.</p>');
+      return;
+    }
+    const empty = rail.querySelector('.empty');
+    if (empty) empty.remove();
+    build(slices);
+  }
+
+  function tick(ts) {
+    if (!lastTs) lastTs = ts;
+    const dt = (ts - lastTs) / 1000;
+    lastTs = ts;
+    if (!paused && seqWidth > 0) {
+      rail.scrollLeft += SPEED * dt;
+      if (rail.scrollLeft >= seqWidth) rail.scrollLeft -= seqWidth; // wrap seamless
+    } else if (seqWidth > 0 && rail.scrollLeft >= seqWidth) {
+      rail.scrollLeft -= seqWidth; // wrap anche durante il drag manuale
+    }
+    requestAnimationFrame(tick);
+  }
+
+  // Drag / interazione: pausa, poi ripresa dolce.
+  function pause() {
+    paused = true;
+    if (resumeTimer) clearTimeout(resumeTimer);
+  }
+  function scheduleResume() {
+    if (resumeTimer) clearTimeout(resumeTimer);
+    resumeTimer = setTimeout(() => { paused = false; }, RESUME_DELAY);
+  }
+  rail.addEventListener('pointerdown', pause);
+  rail.addEventListener('wheel', () => { pause(); scheduleResume(); }, { passive: true });
+  window.addEventListener('pointerup', scheduleResume);
+  window.addEventListener('pointercancel', scheduleResume);
+
+  // Avvio + refresh periodico (la fetta delle 9 compare senza ricaricare a mano).
+  (async () => {
+    const first = await loadManifest();
+    signature = first.map(s => s.file).join(',');
+    render(first);
+    requestAnimationFrame(tick);
+
+    setInterval(async () => {
+      const slices = await loadManifest();
+      const sig = slices.map(s => s.file).join(',');
+      if (sig !== signature) {
+        signature = sig;
+        const keep = rail.scrollLeft;
+        render(slices);
+        rail.scrollLeft = keep; // non far saltare la posizione
+      }
+    }, REFRESH_MS);
+  })();
+})();
+</script>
+</body>
+</html>

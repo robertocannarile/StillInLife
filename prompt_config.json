@@ -1,0 +1,88 @@
+{
+  "_usage": "Read this JSON as generation instructions for Nano Banana 2. Attach Table1.png as the reference image. Follow reference_image and constants strictly; randomize freely from pools each run.",
+  "task": "Generate a hyper-realistic Dutch Golden Age pronkstilleven (sumptuous banquet still life, c.1650), reinvented — never a copy of any historical work.",
+  "format": "16:9 landscape, photographic detail, indistinguishable from a real photograph, true-to-life textures, materials and light physics.",
+
+  "reference_image": {
+    "role": "FIXED BASE — the permanent stage of the scene",
+    "content": "A real dark wooden table: warm reddish-brown aged wood top, visible thick front edge, carved apron below, surrounded by pure black.",
+    "rules": [
+      "Keep this EXACT table every generation: same wood grain, same reddish-brown color, same front edge, same carved apron, same height in frame, same low straight-on viewpoint.",
+      "Do NOT recolor, restyle, move, tilt, rescale, crop or redraw the table.",
+      "Do NOT cut, cover or hide the front edge and apron — the wooden edge stays fully visible along the bottom.",
+      "Objects rest ON the top surface, may lean or hang slightly over, but never erase the edge.",
+      "Build the whole scene ON this tabletop only. Everything above the table is the same pure black void."
+    ]
+  },
+
+  "constants": {
+    "perspective": "Identical every time — the low, straight-on viewpoint of the reference. No change of angle, tilt or scale.",
+    "tileable": "Table runs full width and continues beyond both side edges, so multiple outputs line up side by side into one continuous table. Objects may be cut by the left/right frame edges, continuing off-frame.",
+    "darkness": "ALMOST PURE BLACKNESS — overwhelmingly black, extremely underexposed, the darkest possible still life. Over 90% of the frame is deep black void. Nearly everything on the table swallowed by shadow, barely readable; only faint hints of form survive.",
+    "lighting": "NON-DIRECTIONAL — no single light source, no beam, no direction, no cast shadows revealing direction. A few tiny points emerge feebly from the black on their own: a dim self-glow, a single weak wet highlight on a rim, one barely-lit edge floating in the void. Rare, isolated, minuscule glints drowned in darkness, coming from nowhere. Deep tenebrism."
+  },
+
+  "variation_rule": "CRITICAL: every generation must look completely different. Do NOT default to the lobster/lemon/grapes cliché. Each run pick a DIFFERENT random subset from EVERY pool, respecting its pick count, and deliberately leave many whole categories out. Never repeat the same combination across runs. Rotate which categories appear. The ONLY constants are the table, the perspective and the darkness.",
+
+  "abundance": "MAXIMALIST — the tabletop crammed end to end, piled high and overflowing, but almost entirely hidden in shadow, only faint fragments perceptible.",
+
+  "pools": {
+    "textiles": {
+      "pick": [1, 2],
+      "note": "dark tones, heaped/twisted/knotted, partly draped over the top but never fully hiding the front edge",
+      "items": ["crushed velvet", "heavy silk", "damask", "brocade", "cloth-of-gold", "cloth-of-silver", "embroidered tapestry", "coarse linen", "burlap", "fur throw", "sheepskin", "ermine trim", "fringed oriental carpet", "kilim", "Persian rug", "lace", "tooled leather", "canvas sailcloth", "netting", "fishing net", "rope", "ribbon", "tasseled cord", "banner cloth", "quilted fabric"],
+      "colors": ["moss green", "wine red", "indigo", "black", "deep gold", "aubergine", "teal", "rust", "ochre", "bruise-purple", "midnight blue", "oxblood", "olive", "charcoal", "burgundy"]
+    },
+    "vessels_tableware": {
+      "pick": [5, 10],
+      "items": ["gilt-silver ewer", "nautilus cup", "Chinese porcelain bowl", "kraak porcelain dish", "Delftware", "majolica", "Venetian goblet", "roemer glass", "façon-de-Venise flute", "berkemeyer", "tazza", "ornate salver", "silver platter", "pewter plate", "pewter charger", "brass basin", "copper cauldron", "copper pot", "glass carafe", "decanter", "wine flask", "bottle in wicker", "green glass bottle", "stoneware jug", "Bellarmine jug", "drinking horn", "coconut cup", "ostrich-egg cup", "silver casket", "overturned tankard", "beer stein", "teapot", "coffee pot", "chocolate pot", "ladle", "chafing dish", "wooden trencher", "salt cellar", "spice box", "sugar caster", "porringer", "goblet with lid", "footed comport"]
+    },
+    "curiosities_instruments": {
+      "pick": [3, 7],
+      "items": ["candelabra", "snuffed candle", "beeswax candle stub", "oil lamp", "lantern", "pocket watch", "hourglass", "sandglass", "sundial", "mortar and pestle", "balance scales", "steelyard", "terrestrial globe", "celestial globe", "armillary sphere", "astrolabe", "compass", "dividers", "sextant", "quadrant", "telescope", "microscope", "magnifying glass", "spectacles", "quill and inkwell", "wax seal and stamp", "sealed letter", "bundle of letters", "ledgers", "open book", "closed leather book", "rolled maps", "unfurled chart", "playing cards", "tarot cards", "dice", "chess set", "backgammon board", "abacus", "birdcage", "apothecary jars", "medicine phials", "alembic", "retort", "distilling flask", "censer with smoke", "key ring", "padlock", "hand mirror", "magnet", "prism", "clockwork mechanism", "loose gears"]
+    },
+    "adornment_vanitas": {
+      "pick": [2, 6],
+      "items": ["string of pearls", "loose pearls", "gold chain", "necklace", "scattered coins", "gold ducats", "silver medals", "jewels", "loose gemstones", "a ring", "a crown", "a diadem", "a scepter", "a rosary", "a crucifix", "a reliquary", "a devotional medal", "human skull", "animal skull", "jawbone", "bones", "a femur", "wax seal", "a carnival mask", "a domino mask", "a feathered fan", "gloves", "a lace collar", "pipe and tobacco", "clay pipe bowl", "snuffbox", "a wilting nosegay", "an extinguished candle with smoke", "an overturned wine glass", "spilled wine", "a soap bubble", "a moth", "a fly on a skull"]
+    },
+    "music": {
+      "pick": [0, 2],
+      "items": ["lute", "theorbo", "violin", "viola da gamba", "cello", "recorder", "transverse flute", "cittern", "guitar", "harp", "shawm", "cornetto", "sackbut", "trumpet", "bagpipes", "hurdy-gurdy", "tambourine", "small drum", "sheet music", "a music book", "a songbook", "a tuning key"]
+    },
+    "weapons_armor": {
+      "pick": [0, 2],
+      "items": ["rapier", "dagger", "stiletto", "hunting knife", "cleaver", "flintlock pistol", "matchlock musket", "powder horn", "a helmet", "a morion", "a gauntlet", "a breastplate", "a shield", "a buckler", "a hunting horn", "a crossbow", "a quiver of arrows", "a halberd head", "a mace"]
+    },
+    "naturalia_shells": {
+      "pick": [0, 4],
+      "note": "wunderkammer naturalia collected among the objects",
+      "items": ["conch shell", "nautilus shell", "spiral seashells", "scallop shells", "cowrie shells", "red coral branch", "black coral", "a starfish", "a sea urchin", "a dried seahorse", "sponge", "amber lumps", "a fossil ammonite", "a geode", "rough crystals", "a lodestone", "peacock feathers", "exotic bird feathers", "an ostrich egg", "a tortoiseshell", "dried flowers pressed", "a bird's nest with eggs", "antlers", "a horn"]
+    },
+    "dead_game_creatures": {
+      "pick": [4, 9],
+      "note": "vary species widely, never the same set",
+      "items": ["plucked chicken", "feathered pheasant", "mallard duck", "teal", "partridge", "grouse", "woodcock", "quail", "snipe", "lapwing", "tiny songbirds", "a peacock", "swan", "heron", "crane", "turkey", "goose", "hanging hare", "rabbit", "suckling piglet", "boar's head", "goat's head", "sheep's head", "deer leg", "venison haunch", "ox tongue", "whole fish", "eel", "carp", "pike", "perch", "herring", "sardines", "mackerel", "cod head", "salmon steak", "ray", "skate", "squid", "octopus", "cuttlefish", "crayfish", "lobster", "crab", "langoustine", "shrimp", "prawns", "oysters", "mussels", "cockles", "whelks", "scallops", "clams", "snails", "frog", "toad", "turtle", "tortoise", "coiled snake", "lizard", "salamander", "a hunting dog nosing the edge", "a watchful cat", "a caged finch", "a monkey", "a parrot", "an owl", "a hawk on a perch", "a rat gnawing scraps", "a hedgehog", "a mole"]
+    },
+    "fruit_veg_food": {
+      "pick": [5, 10],
+      "note": "many bruised, moldy, blackened, split, over-ripe, liquefying, crawling with insects",
+      "items": ["grapes", "peaches", "apricots", "nectarines", "lemons with spiraling peel", "oranges", "bitter oranges", "limes", "figs", "split pomegranate", "apples", "pears", "quince", "plums", "greengages", "cherries", "redcurrants", "gooseberries", "strawberries", "blackberries", "raspberries", "mulberries", "grapes on the vine", "melon", "watermelon slice", "cantaloupe", "medlars", "chestnuts", "walnuts", "hazelnuts", "almonds", "dates", "raisins", "dried figs", "pine nuts", "artichoke", "cardoon", "cabbage", "red cabbage", "cauliflower", "asparagus", "turnips", "parsnips", "carrots", "onions", "shallots", "garlic", "leeks", "fennel", "cucumbers", "gourds", "pumpkin", "mushrooms", "truffles", "olives", "capers", "peppercorns", "bread loaf", "rye bread", "pretzels", "rolls", "waffles", "wafers", "cut meat pie", "raised game pie", "ham hock", "cured ham", "sausage", "salami", "cheese wheel", "cheese wedge", "butter", "honeycomb", "sugared sweets", "marzipan", "candied fruit", "a lobster", "oyster on the half shell"]
+    },
+    "sweets_confection": {
+      "pick": [0, 3],
+      "items": ["marzipan figures", "sugared almonds", "candied citrus peel", "a stack of wafers", "gingerbread", "a sugar sculpture", "jellied fruits", "a tart", "custard tart", "a comfit dish", "dried sweetmeats"]
+    },
+    "plants_flora": {
+      "pick": [0, 3],
+      "items": ["wilting tulips", "blown roses", "drooping poppies", "dried thistles", "ivy trailing", "grape vine with leaves", "bare branches", "ears of wheat", "sheaf of barley", "dead leaves scattered", "a potted plant", "moss", "fern fronds", "nettles", "a single fresh bloom among the decay", "a broken flower stem", "seed pods", "dandelion clocks"]
+    },
+    "insects_vermin": {
+      "pick": [0, 4],
+      "note": "small, crawling on the food and objects, reinforcing decay",
+      "items": ["houseflies", "a bluebottle fly", "ants trailing", "a beetle", "a stag beetle", "a wasp", "a bee", "a caterpillar", "a spider in a web", "a snail", "a slug", "a moth", "a butterfly", "a dragonfly", "a cricket", "worms in fruit", "maggots", "a centipede"]
+    }
+  },
+
+  "mood": "Photorealistic, extreme detail, decadent vanitas of excess and decay.",
+  "negative": ["bright even lighting", "gray background", "visible light source or beam", "changed/retilted/recolored table", "hidden front edge", "empty tabletop", "cartoon", "illustration"]
+}

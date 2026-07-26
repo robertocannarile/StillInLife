@@ -1,0 +1,50 @@
+name: StillInLife daily slice
+
+on:
+  schedule:
+    # GitHub cron is UTC and has no DST. 07:00 UTC = 09:00 Rome (summer/CEST),
+    # 08:00 UTC = 09:00 Rome (winter/CET). The script guards on Europe/Rome==09
+    # so exactly one of these fires the real run each day.
+    - cron: "0 7 * * *"
+    - cron: "0 8 * * *"
+  workflow_dispatch:        # manual "Run workflow" button (forces a run)
+
+permissions:
+  contents: write           # commit the new slice + manifest
+
+concurrency:
+  group: stillinlife-daily
+  cancel-in-progress: false
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Generate today's slice
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          KIE_API_KEY: ${{ secrets.KIE_API_KEY }}
+          # Manual runs from the Actions tab always generate, ignoring the 09:00 guard.
+          FORCE_RUN: ${{ github.event_name == 'workflow_dispatch' && '1' || '0' }}
+        run: python scripts/generate.py
+
+      - name: Commit new slice
+        run: |
+          git config user.name "stillinlife-bot"
+          git config user.email "bot@users.noreply.github.com"
+          if [ -n "$(git status --porcelain)" ]; then
+            git add output state
+            git commit -m "slice: $(date -u +%Y-%m-%d)"
+            git push
+          else
+            echo "Nothing to commit (guard skipped the run or slice already exists)."
+          fi
