@@ -34,7 +34,7 @@ NEWS_RSS = "https://news.google.com/rss?hl=it&gl=IT&ceid=IT:it"
 KIE_CREATE = "https://api.kie.ai/api/v1/jobs/createTask"
 KIE_RECORD = "https://api.kie.ai/api/v1/jobs/recordInfo"
 KIE_MODEL = "nano-banana-2"
-CLAUDE_MODEL = "claude-opus-4-8"
+CLAUDE_MODEL = "claude-haiku-4-5"
 HISTORY_FOR_CLAUDE = 30  # how many past objects to show Claude to avoid repeats
 
 
@@ -101,7 +101,6 @@ links to the news, and the Italian headline it came from."""
     resp = client.messages.parse(
         model=CLAUDE_MODEL,
         max_tokens=2000,
-        thinking={"type": "adaptive"},
         messages=[{"role": "user", "content": prompt}],
         output_format=DailyObject,
     )
