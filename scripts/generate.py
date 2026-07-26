@@ -1,10 +1,20 @@
 #!/usr/bin/env python3
 """StillInLife — daily generator.
 
-Runs once a day. Reads the day's news, asks Claude to distill it into a single
-physical object, injects that object into the pronkstilleven prompt, and asks
-Nano Banana 2 (via Kie.ai) to paint the next slice of an endless dark banquet
-table. Each slice continues seamlessly from the previous one.
+Every day at 09:00 Rome the project extends one endless dark banquet table by two
+stitched slices:
+
+  … filler(yesterday) · [9AM object band] · filler(today) · [9AM object band] …
+
+- The OBJECT band is a narrow 9:16 portion of the table carrying the day's object
+  (distilled from the news).
+- The FILLER is a wide 16:9 stretch of fresh antique clutter that fills the time
+  until the next 9AM.
+
+Continuity is pushed as far as Nano Banana 2 allows: each new slice is generated
+from the right-edge crop of the previous slice, instructed to resume exactly where
+it ends. The viewer scrolls the strip left, time-synchronised, so each 9AM object
+reaches the "now" line at exactly 09:00.
 """
 
 from __future__ import annotations
@@ -21,6 +31,7 @@ from zoneinfo import ZoneInfo
 import feedparser
 import requests
 from anthropic import Anthropic
+from PIL import Image
 from pydantic import BaseModel
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -35,17 +46,19 @@ KIE_CREATE = "https://api.kie.ai/api/v1/jobs/createTask"
 KIE_RECORD = "https://api.kie.ai/api/v1/jobs/recordInfo"
 KIE_MODEL = "nano-banana-2"
 CLAUDE_MODEL = "claude-haiku-4-5"
-HISTORY_FOR_CLAUDE = 30  # how many past objects to show Claude to avoid repeats
+HISTORY_FOR_CLAUDE = 30
+
+OBJ_ASPECT = "9:16"    # narrow object band — only a portion of the table
+FILL_ASPECT = "16:9"   # wide filler stretch
+RESOLUTION = "2K"
+EDGE_FRAC = 0.22       # fraction of width kept as the seam reference for tomorrow
 
 
-# --------------------------------------------------------------------------- #
-# Structured output from Claude
-# --------------------------------------------------------------------------- #
 class DailyObject(BaseModel):
-    object: str          # short English noun phrase, e.g. "a cracked smartphone"
-    render_desc: str     # English, in the 17th-c oil style, decontextualized
-    symbolism: str       # short Italian note on the link to the news
-    headline_ref: str    # the Italian headline it was drawn from
+    object: str
+    render_desc: str
+    symbolism: str
+    headline_ref: str
 
 
 # --------------------------------------------------------------------------- #
@@ -58,10 +71,17 @@ def load_manifest() -> list[dict]:
 
 
 def raw_url(rel_path: str) -> str:
-    """Public raw.githubusercontent URL for a repo-relative path on main."""
-    repo = os.environ["GITHUB_REPOSITORY"]  # e.g. "roberto/StillInLife"
+    repo = os.environ["GITHUB_REPOSITORY"]
     branch = os.environ.get("GITHUB_REF_NAME", "main")
     return f"https://raw.githubusercontent.com/{repo}/{branch}/{rel_path}"
+
+
+def last_edge_rel(manifest: list[dict]) -> Optional[str]:
+    """Right-edge crop of the most recent filler — the seam for today's object."""
+    for entry in reversed(manifest):
+        if entry.get("edge"):
+            return entry["edge"]
+    return None
 
 
 def fetch_headlines(limit: int = 10) -> list[str]:
@@ -73,10 +93,9 @@ def fetch_headlines(limit: int = 10) -> list[str]:
 
 
 def extract_object(headlines: list[str], past_objects: list[str]) -> DailyObject:
-    client = Anthropic()  # reads ANTHROPIC_API_KEY
+    client = Anthropic()
     avoid = "\n".join(f"- {o}" for o in past_objects[-HISTORY_FOR_CLAUDE:]) or "(none yet)"
     news = "\n".join(f"- {h}" for h in headlines)
-
     prompt = f"""You curate an art project: an endless 17th-century Dutch banquet
 still life (pronkstilleven) painted in near-total darkness. Each day ONE extra
 object is added to the table — an object distilled from that day's news, but
@@ -97,67 +116,63 @@ a tangible object (e.g. inflation -> a worn, clipped coin). Rules:
 Return the object as a short English noun phrase, a rich English render
 description in the same tenebrist oil style, a short Italian note on how it
 links to the news, and the Italian headline it came from."""
-
     resp = client.messages.parse(
         model=CLAUDE_MODEL,
         max_tokens=2000,
         messages=[{"role": "user", "content": prompt}],
         output_format=DailyObject,
     )
-    result = resp.parsed_output
-    if result is None:
+    if resp.parsed_output is None:
         raise RuntimeError("Claude returned no parseable object.")
-    return result
+    return resp.parsed_output
 
 
-def build_prompt(daily: Optional[DailyObject], has_prev: bool) -> str:
-    """A single 16:9 slice of one endless table.
-
-    daily=None  → a plain 'filler' slice (fresh clutter, no news object).
-    daily=obj   → the day's object slice.
-    has_prev    → this slice continues the previous slice on its left edge.
-    """
+def build_prompt(daily: Optional[DailyObject], kind: str, has_prev: bool) -> str:
     config = json.loads(CONFIG_PATH.read_text(encoding="utf-8"))
     parts = [json.dumps(config, ensure_ascii=False, indent=2)]
 
     if has_prev:
         parts.append(
-            "CONTINUITY — the FIRST attached image is the previous slice of this "
-            "endless table. Continue the table seamlessly to the RIGHT of it: the "
-            "wood, tone, table height, front edge and near-total darkness must "
-            "match and align exactly at the left edge, so the two images sit side "
-            "by side as one unbroken continuous table. Objects near the seam may "
-            "continue across it. The LAST attached image is the fixed reference "
-            "table for style and colour — never change the table itself."
+            "SEAM — the attached image is the EXACT RIGHT EDGE of the endless table "
+            "so far. Your image must begin EXACTLY where that edge ends: the "
+            "leftmost column continues it seamlessly — identical wood, identical "
+            "table height and front edge, identical near-total darkness, and any "
+            "object touching the seam carries straight across it. Do NOT restart or "
+            "recompose the scene; you are only extending the same table to the right."
         )
     else:
         parts.append(
-            "This is the START of an endless 16:9 table. The attached image is the "
-            "fixed reference table — keep it exactly as shown (wood, colour, front "
-            "edge, height, perspective, near-total darkness). Everything ON it changes."
+            "This is the START of an endless table. The attached image is the fixed "
+            "reference table — keep it exactly (wood, colour, front edge, height, "
+            "perspective, near-total darkness). Everything ON it changes."
         )
 
-    if daily is not None:
+    if kind == "object":
+        obj = daily.render_desc if daily else ""
         parts.append(
-            "DAILY OBJECT — among the antique clutter include exactly ONE extra "
-            f"object: {daily.render_desc} Painted in the same 17th-century Dutch "
-            "oil realism and near-total darkness, decontextualized and "
-            "anachronistic, resting naturally on the table among the antique objects."
+            "FORMAT — a NARROW vertical 9:16 band: only a small portion of the "
+            "table, not a full scene. Among a little antique clutter feature exactly "
+            f"ONE object: {obj} Painted in the same 17th-century Dutch oil realism "
+            "and near-total darkness, decontextualized and anachronistic."
         )
-
+    else:  # filler
+        parts.append(
+            "FORMAT — a WIDE 16:9 stretch of the same table, filled with fresh "
+            "antique clutter (draw from the pools). NO extra news object here — just "
+            "the maximalist dark still life continuing the table."
+        )
     return "\n\n".join(parts)
 
 
-def kie_generate(prompt: str, image_urls: list[str], api_key: str) -> str:
-    """Create a task, poll until success, return the result image URL."""
+def kie_generate(prompt: str, image_urls: list[str], aspect: str, api_key: str) -> str:
     headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
     body = {
         "model": KIE_MODEL,
         "input": {
             "prompt": prompt,
             "image_input": image_urls,
-            "aspect_ratio": "16:9",
-            "resolution": "2K",
+            "aspect_ratio": aspect,
+            "resolution": RESOLUTION,
             "output_format": "png",
         },
     }
@@ -167,21 +182,20 @@ def kie_generate(prompt: str, image_urls: list[str], api_key: str) -> str:
     if payload.get("code") != 200:
         raise RuntimeError(f"Kie createTask failed: {payload}")
     task_id = payload["data"]["taskId"]
-    print(f"Kie task created: {task_id}")
-
-    deadline = time.time() + 900  # 15 min
+    print(f"  Kie task {task_id} ({aspect})")
+    deadline = time.time() + 900
     while time.time() < deadline:
         time.sleep(10)
         q = requests.get(KIE_RECORD, headers=headers, params={"taskId": task_id}, timeout=60)
         q.raise_for_status()
         data = q.json().get("data", {})
         state = data.get("state")
-        print(f"  state={state} progress={data.get('progress')}")
+        print(f"    state={state} progress={data.get('progress')}")
         if state == "success":
-            result_json = json.loads(data["resultJson"])
-            urls = result_json.get("resultUrls") or result_json.get("result_urls")
+            result = json.loads(data["resultJson"])
+            urls = result.get("resultUrls") or result.get("result_urls")
             if not urls:
-                raise RuntimeError(f"No resultUrls in: {result_json}")
+                raise RuntimeError(f"No resultUrls in: {result}")
             return urls[0]
         if state == "fail":
             raise RuntimeError(f"Kie task failed: {data.get('failMsg')}")
@@ -194,13 +208,21 @@ def download(url: str, dest: Path) -> None:
     dest.write_bytes(r.content)
 
 
+def crop_right_edge(src: Path, dst: Path, frac: float = EDGE_FRAC) -> None:
+    """Save the rightmost `frac` of the image — the seam reference for tomorrow."""
+    with Image.open(src) as im:
+        w, h = im.size
+        band = max(1, int(w * frac))
+        im.crop((w - band, 0, w, h)).save(dst)
+
+
 # --------------------------------------------------------------------------- #
 # Main
 # --------------------------------------------------------------------------- #
 def main() -> int:
     now_rome = datetime.now(ROME)
     if os.environ.get("FORCE_RUN") != "1" and now_rome.hour != 9:
-        print(f"Not 09:00 in Rome (now {now_rome:%H:%M}); skipping. Set FORCE_RUN=1 to override.")
+        print(f"Not 09:00 in Rome (now {now_rome:%H:%M}); skipping. Set FORCE_RUN=1.")
         return 0
 
     kie_key = os.environ.get("KIE_API_KEY")
@@ -209,10 +231,11 @@ def main() -> int:
         return 1
 
     date_str = now_rome.strftime("%Y-%m-%d")
-    normal_rel = f"output/{date_str}-a.png"   # filler table slice (no news object)
-    object_rel = f"output/{date_str}-b.png"   # slice carrying the day's object
-    if (ROOT / object_rel).exists():
-        print(f"{object_rel} already exists; nothing to do.")
+    obj_rel = f"output/{date_str}-obj.png"
+    fill_rel = f"output/{date_str}-fill.png"
+    edge_rel = f"output/{date_str}-edge.png"
+    if (ROOT / obj_rel).exists():
+        print(f"{obj_rel} already exists; nothing to do.")
         return 0
 
     manifest = load_manifest()
@@ -220,7 +243,6 @@ def main() -> int:
 
     print("Fetching headlines…")
     headlines = fetch_headlines()
-
     print("Asking Claude for today's object…")
     daily = extract_object(headlines, past_objects)
     print(f"Object: {daily.object}\nSymbolism: {daily.symbolism}")
@@ -228,32 +250,40 @@ def main() -> int:
     OUTPUT_DIR.mkdir(exist_ok=True)
     table_url = raw_url(TABLE_REL)
 
-    # 1) Normal slice — continues yesterday's last committed slice (or the table
-    #    itself on day one). It has no news object, only fresh random clutter.
-    prev_ref = raw_url(manifest[-1]["file"]) if manifest else None
-    normal_refs = [prev_ref, table_url] if prev_ref else [table_url]
-    print("Generating the plain filler slice…")
-    normal_url = kie_generate(build_prompt(None, has_prev=bool(prev_ref)), normal_refs, kie_key)
-    download(normal_url, ROOT / normal_rel)
+    # 1) OBJECT band — continues yesterday's filler edge (or the table on day one).
+    prev_edge = last_edge_rel(manifest)
+    obj_refs = [raw_url(prev_edge)] if prev_edge else [table_url]
+    print("Generating the 9AM object band…")
+    obj_url = kie_generate(
+        build_prompt(daily, kind="object", has_prev=bool(prev_edge)),
+        obj_refs, OBJ_ASPECT, kie_key,
+    )
+    download(obj_url, ROOT / obj_rel)
 
-    # 2) Object slice — continues the plain slice we just made. We feed Kie the
-    #    freshly-returned normal_url directly (already hosted), so we don't need
-    #    it committed to GitHub first.
-    print("Generating the object slice (continuing the filler)…")
-    object_refs = [normal_url, table_url]
-    object_url = kie_generate(build_prompt(daily, has_prev=True), object_refs, kie_key)
-    download(object_url, ROOT / object_rel)
+    # 2) FILLER — continues today's object band (use its live Kie URL directly).
+    print("Generating the filler stretch…")
+    fill_url = kie_generate(
+        build_prompt(None, kind="filler", has_prev=True),
+        [obj_url], FILL_ASPECT, kie_key,
+    )
+    download(fill_url, ROOT / fill_rel)
 
+    # 3) Right-edge crop of the filler = tomorrow's seam.
+    crop_right_edge(ROOT / fill_rel, ROOT / edge_rel)
+
+    anchor_iso = now_rome.replace(hour=9, minute=0, second=0, microsecond=0).isoformat()
+    seq = len(manifest)
     manifest.append({
-        "date": date_str, "file": normal_rel, "type": "normal",
-        "object": "", "symbolism": "", "headline": "",
-    })
-    manifest.append({
-        "date": date_str, "file": object_rel, "type": "object",
+        "seq": seq, "date": date_str, "file": obj_rel, "type": "object",
+        "anchor": anchor_iso,  # this band reaches the 'now' line at 09:00 today
         "object": daily.object, "symbolism": daily.symbolism, "headline": daily.headline_ref,
     })
+    manifest.append({
+        "seq": seq + 1, "date": date_str, "file": fill_rel, "type": "filler",
+        "edge": edge_rel, "object": "", "symbolism": "", "headline": "",
+    })
     MANIFEST_PATH.write_text(json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8")
-    print(f"Saved 2 slices; manifest now has {len(manifest)} slices.")
+    print(f"Saved object + filler; manifest now has {len(manifest)} slices.")
     return 0
 
 

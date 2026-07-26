@@ -24,14 +24,14 @@
   .track { display: flex; align-items: center; height: 100vh; width: max-content; }
   figure { position: relative; flex: 0 0 auto; height: 100vh; }
   figure img { display: block; height: 100vh; width: auto; }
-  figcaption {
+  figure.object figcaption {
     position: absolute; left: 0; right: 0; bottom: 0;
-    padding: 40px 22px 20px; font-size: 13px; line-height: 1.5;
-    background: linear-gradient(rgba(0,0,0,0), rgba(0,0,0,.82));
+    padding: 40px 16px 18px; font-size: 12px; line-height: 1.45;
+    background: linear-gradient(rgba(0,0,0,0), rgba(0,0,0,.85));
     opacity: 0; transition: opacity .25s;
   }
-  figure:hover figcaption { opacity: 1; }
-  figcaption .obj { font-size: 15px; color: #e8dcc8; }
+  figure.object:hover figcaption { opacity: 1; }
+  figcaption .obj { font-size: 14px; color: #e8dcc8; }
   figcaption .date { color: #8a7d6c; letter-spacing: .05em; }
   figcaption .sym { color: #b3a892; margin-top: 4px; font-style: italic; }
   .empty { position: absolute; inset: 0; display: flex; align-items: center;
@@ -51,48 +51,78 @@
   const track = document.getElementById('track');
   const countEl = document.getElementById('count');
 
-  const SPEED = 14;            // px al secondo (lento) — la tavola scorre a sinistra
-  const RESUME_DELAY = 4000;   // ms prima che l'auto-scroll riprenda dopo il drag
+  const DAY = 86400;                 // secondi in un giorno
+  const RESUME_DELAY = 4000;         // ms: dopo il drag torna alla posizione "live"
   const REFRESH_MS = 10 * 60 * 1000; // ricontrolla il manifest ogni 10 min
 
-  let seqWidth = 0;            // larghezza di UNA sequenza (le fette sono duplicate)
-  let signature = '';         // per capire se sono arrivate fette nuove
+  let anchors = [];   // [{t: epoch_sec, x: pixel}] — le bande oggetto + la coda virtuale
+  let maxScroll = 0;
+  let signature = '';
   let paused = false;
   let resumeTimer = null;
-  let lastTs = 0;
 
   function figureFor(slice) {
     const fig = document.createElement('figure');
+    fig.className = slice.type === 'object' ? 'object' : 'filler';
     const img = document.createElement('img');
     img.src = slice.file;
     img.alt = slice.object || slice.date;
-    const cap = document.createElement('figcaption');
-    cap.innerHTML =
-      `<div class="date">${slice.date}</div>` +
-      `<div class="obj">${slice.object || ''}</div>` +
-      (slice.symbolism ? `<div class="sym">${slice.symbolism}</div>` : '');
-    fig.append(img, cap);
+    fig.append(img);
+    if (slice.type === 'object') {
+      const cap = document.createElement('figcaption');
+      cap.innerHTML =
+        `<div class="date">${slice.date}</div>` +
+        `<div class="obj">${slice.object || ''}</div>` +
+        (slice.symbolism ? `<div class="sym">${slice.symbolism}</div>` : '');
+      fig.append(cap);
+    }
     return fig;
   }
 
-  function measure() {
-    // Larghezza di una sequenza = metà del track (contenuto duplicato x2).
-    seqWidth = track.scrollWidth / 2;
+  // Mappa tempo→pixel: interpolazione lineare fra le bande oggetto (ognuna
+  // ancorata al suo 09:00). Ogni segmento giorno scorre in esattamente 24h.
+  function measure(slices) {
+    anchors = [];
+    const figs = Array.from(track.children);
+    slices.forEach((s, i) => {
+      if (s.type === 'object' && s.anchor) {
+        const t = Date.parse(s.anchor) / 1000;
+        if (!isNaN(t)) anchors.push({ t, x: figs[i].offsetLeft });
+      }
+    });
+    // Coda virtuale: fine dell'ultimo filler, raggiunta al 09:00 del giorno dopo.
+    if (anchors.length) {
+      const last = anchors[anchors.length - 1];
+      anchors.push({ t: last.t + DAY, x: track.scrollWidth });
+    }
+    maxScroll = Math.max(0, track.scrollWidth - rail.clientWidth);
+  }
+
+  function pixelAt(nowSec) {
+    if (anchors.length === 0) return 0;
+    if (nowSec <= anchors[0].t) return anchors[0].x;
+    const end = anchors[anchors.length - 1];
+    if (nowSec >= end.t) return end.x;
+    for (let i = 0; i < anchors.length - 1; i++) {
+      const a = anchors[i], b = anchors[i + 1];
+      if (nowSec >= a.t && nowSec < b.t) {
+        const f = (nowSec - a.t) / (b.t - a.t);
+        return a.x + (b.x - a.x) * f;
+      }
+    }
+    return end.x;
   }
 
   function build(slices) {
     track.innerHTML = '';
-    // Due copie identiche in fila → loop senza fine: quando lo scroll supera
-    // una sequenza, si torna indietro di seqWidth senza salto visibile.
-    for (let copy = 0; copy < 2; copy++) {
-      for (const s of slices) track.append(figureFor(s));
-    }
-    countEl.textContent = slices.length + (slices.length === 1 ? ' fetta' : ' fette');
+    for (const s of slices) track.append(figureFor(s));
+    const objects = slices.filter(s => s.type === 'object').length;
+    countEl.textContent = objects + (objects === 1 ? ' giorno' : ' giorni');
 
     const imgs = Array.from(track.querySelectorAll('img'));
     let left = imgs.length;
-    if (left === 0) { measure(); return; }
-    const done = () => { if (--left === 0) measure(); };
+    if (left === 0) { measure(slices); return; }
+    const done = () => { if (--left === 0) measure(slices); };
     for (const im of imgs) {
       if (im.complete) done();
       else { im.addEventListener('load', done); im.addEventListener('error', done); }
@@ -103,7 +133,7 @@
     try {
       const res = await fetch('state/manifest.json', { cache: 'no-store' });
       const data = await res.json();
-      data.sort((a, b) => a.file.localeCompare(b.file)); // date then -a before -b
+      data.sort((a, b) => (a.seq ?? 0) - (b.seq ?? 0));
       return data;
     } catch (e) { return []; }
   }
@@ -120,34 +150,27 @@
     build(slices);
   }
 
-  function tick(ts) {
-    if (!lastTs) lastTs = ts;
-    const dt = (ts - lastTs) / 1000;
-    lastTs = ts;
-    if (!paused && seqWidth > 0) {
-      rail.scrollLeft += SPEED * dt;
-      if (rail.scrollLeft >= seqWidth) rail.scrollLeft -= seqWidth; // wrap seamless
-    } else if (seqWidth > 0 && rail.scrollLeft >= seqWidth) {
-      rail.scrollLeft -= seqWidth; // wrap anche durante il drag manuale
+  function tick() {
+    if (!paused && anchors.length) {
+      // now-line = bordo destro del viewport → il visibile è il passato.
+      const target = pixelAt(Date.now() / 1000) - rail.clientWidth;
+      rail.scrollLeft = Math.max(0, Math.min(maxScroll, target));
     }
     requestAnimationFrame(tick);
   }
 
-  // Drag / interazione: pausa, poi ripresa dolce.
-  function pause() {
-    paused = true;
-    if (resumeTimer) clearTimeout(resumeTimer);
-  }
-  function scheduleResume() {
+  // Drag: pausa, poi torna alla posizione live.
+  const pause = () => { paused = true; if (resumeTimer) clearTimeout(resumeTimer); };
+  const scheduleResume = () => {
     if (resumeTimer) clearTimeout(resumeTimer);
     resumeTimer = setTimeout(() => { paused = false; }, RESUME_DELAY);
-  }
+  };
   rail.addEventListener('pointerdown', pause);
   rail.addEventListener('wheel', () => { pause(); scheduleResume(); }, { passive: true });
   window.addEventListener('pointerup', scheduleResume);
   window.addEventListener('pointercancel', scheduleResume);
+  window.addEventListener('resize', () => { maxScroll = Math.max(0, track.scrollWidth - rail.clientWidth); });
 
-  // Avvio + refresh periodico (la fetta delle 9 compare senza ricaricare a mano).
   (async () => {
     const first = await loadManifest();
     signature = first.map(s => s.file).join(',');
@@ -157,12 +180,7 @@
     setInterval(async () => {
       const slices = await loadManifest();
       const sig = slices.map(s => s.file).join(',');
-      if (sig !== signature) {
-        signature = sig;
-        const keep = rail.scrollLeft;
-        render(slices);
-        rail.scrollLeft = keep; // non far saltare la posizione
-      }
+      if (sig !== signature) { signature = sig; render(slices); }
     }, REFRESH_MS);
   })();
 })();
