@@ -41,10 +41,15 @@ jobs:
         run: |
           git config user.name "stillinlife-bot"
           git config user.email "bot@users.noreply.github.com"
-          if [ -n "$(git status --porcelain)" ]; then
-            git add output state
-            git commit -m "slice: $(date -u +%Y-%m-%d)"
-            git push
-          else
+          if [ -z "$(git status --porcelain)" ]; then
             echo "Nothing to commit (guard skipped the run or slice already exists)."
+            exit 0
           fi
+          git add output state
+          git commit -m "slice: $(date -u +%Y-%m-%d)"
+          # Rebase onto any changes pushed meanwhile, then push (retry on race).
+          for i in 1 2 3; do
+            git pull --rebase origin main && git push && exit 0
+            echo "push attempt $i failed, retrying…"; sleep 5
+          done
+          echo "push failed after retries"; exit 1
