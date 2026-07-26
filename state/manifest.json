@@ -1,1 +1,22 @@
-[]
+[
+  {
+    "seq": 0,
+    "date": "2026-07-26",
+    "file": "output/2026-07-26-obj.png",
+    "type": "object",
+    "anchor": "2026-07-26T09:00:00+02:00",
+    "object": "A charred pinecone",
+    "symbolism": "La pineta in fiamme del Gargano trasportata nella tavola barocca: la natura infiammata, la perdita, l'incontrollabilità del fuoco come metafora della furia contemporanea.",
+    "headline": "Fiamme sul Gargano: brucia una pineta di macchia mediterranea, i roghi minacciano le spiagge - RaiNews"
+  },
+  {
+    "seq": 1,
+    "date": "2026-07-26",
+    "file": "output/2026-07-26-fill.png",
+    "type": "filler",
+    "edge": "output/2026-07-26-edge.png",
+    "object": "",
+    "symbolism": "",
+    "headline": ""
+  }
+]
