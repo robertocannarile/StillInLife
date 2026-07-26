@@ -24,9 +24,6 @@
   .track { display: flex; align-items: center; height: 100vh; width: max-content; }
   figure { position: relative; flex: 0 0 auto; height: 100vh; }
   figure img { display: block; height: 100vh; width: auto; }
-  /* Left-edge fade so a slice cross-dissolves over the previous one at the seam. */
-  figure.seamed { -webkit-mask-image: linear-gradient(to right, transparent, #000 7%);
-    mask-image: linear-gradient(to right, transparent, #000 7%); }
   figure.object figcaption {
     position: absolute; left: 0; right: 0; bottom: 0;
     padding: 40px 16px 18px; font-size: 12px; line-height: 1.45;
@@ -57,7 +54,7 @@
   const DAY = 86400;                 // secondi in un giorno
   const RESUME_DELAY = 4000;         // ms: dopo il drag torna alla posizione "live"
   const REFRESH_MS = 10 * 60 * 1000; // ricontrolla il manifest ogni 10 min
-  const OVERLAP_FRAC = 0.06;         // quanto ogni fetta si sovrappone alla precedente (nasconde la giunzione)
+  const EDGE_FRAC = 0.18;            // deve combaciare con EDGE_FRAC del generatore (larghezza del lembo cucito)
 
   let anchors = [];   // [{t: epoch_sec, x: pixel}] — le bande oggetto + la coda virtuale
   let maxScroll = 0;
@@ -128,13 +125,18 @@
     if (left === 0) { measure(slices); return; }
     const done = () => {
       if (--left !== 0) return;
-      // Overlap each slice onto the previous one to swallow the duplicated seam.
+      // Each slice reproduces a thin sliver (EDGE_FRAC) of the PREVIOUS slice at
+      // its left. Slide it left by that sliver's displayed width so the duplicate
+      // lands exactly on the previous slice's real edge, then fade it in so the
+      // two cross-dissolve and the seam disappears.
       const figs = Array.from(track.children);
-      figs.forEach((f, i) => {
-        if (i === 0) return;
-        f.classList.add('seamed');
-        f.style.marginLeft = `-${Math.round(f.offsetWidth * OVERLAP_FRAC)}px`;
-      });
+      for (let i = 1; i < figs.length; i++) {
+        const overlap = Math.round(figs[i - 1].offsetWidth * EDGE_FRAC);
+        figs[i].style.marginLeft = `-${overlap}px`;
+        const grad = `linear-gradient(to right, transparent, #000 ${overlap}px)`;
+        figs[i].style.webkitMaskImage = grad;
+        figs[i].style.maskImage = grad;
+      }
       measure(slices);
     };
     for (const im of imgs) {
