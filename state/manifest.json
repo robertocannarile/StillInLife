@@ -1,1 +1,18 @@
-[]
+[
+  {
+    "date": "2026-07-26",
+    "file": "output/2026-07-26-a.png",
+    "type": "normal",
+    "object": "",
+    "symbolism": "",
+    "headline": ""
+  },
+  {
+    "date": "2026-07-26",
+    "file": "output/2026-07-26-b.png",
+    "type": "object",
+    "object": "A drowned pocket watch, partially submerged and encrusted with silt",
+    "symbolism": "Il corpo del turista olandese trovato nel lago—il tempo interrotto, la viaggio finito, l'acqua che inghiottisce.",
+    "headline": "Como, trovato il corpo del turista olandese scomparso nel lago - Sky TG24"
+  }
+]
