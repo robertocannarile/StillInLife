@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import json
 import os
+import subprocess
 import sys
 import time
 from datetime import datetime
@@ -133,12 +134,13 @@ def build_prompt(daily: Optional[DailyObject], kind: str, has_prev: bool) -> str
 
     if has_prev:
         parts.append(
-            "SEAM — the attached image is the EXACT RIGHT EDGE of the endless table "
-            "so far. Your image must begin EXACTLY where that edge ends: the "
-            "leftmost column continues it seamlessly — identical wood, identical "
-            "table height and front edge, identical near-total darkness, and any "
-            "object touching the seam carries straight across it. Do NOT restart or "
-            "recompose the scene; you are only extending the same table to the right."
+            "SEAM — the attached image is only a THIN SLIVER of the RIGHT EDGE of the "
+            "endless table so far. Do NOT reproduce, enlarge, or re-centre it. Treat "
+            "it purely as the left border to continue FROM: your leftmost strip must "
+            "join it seamlessly — identical wood, table height, front edge and "
+            "near-total darkness, any object touching the seam carrying straight "
+            "across — and then the REST of your image is NEW table extending to the "
+            "right. The sliver's contents must appear only once, at the very left."
         )
     else:
         parts.append(
@@ -209,11 +211,26 @@ def download(url: str, dest: Path) -> None:
 
 
 def crop_right_edge(src: Path, dst: Path, frac: float = EDGE_FRAC) -> None:
-    """Save the rightmost `frac` of the image — the seam reference for tomorrow."""
+    """Save the rightmost `frac` of the image — a thin seam reference."""
     with Image.open(src) as im:
         w, h = im.size
         band = max(1, int(w * frac))
         im.crop((w - band, 0, w, h)).save(dst)
+
+
+def git_publish(rel_paths: list[str], message: str) -> None:
+    """Commit + push specific files mid-run so their raw URLs become reachable
+    (needed to hand a freshly-made seam crop back to Kie within the same run)."""
+    subprocess.run(["git", "config", "user.name", "stillinlife-bot"], cwd=ROOT, check=True)
+    subprocess.run(["git", "config", "user.email", "bot@users.noreply.github.com"], cwd=ROOT, check=True)
+    subprocess.run(["git", "add", *rel_paths], cwd=ROOT, check=True)
+    subprocess.run(["git", "commit", "-m", message], cwd=ROOT, check=True)
+    for _ in range(3):
+        subprocess.run(["git", "pull", "--rebase", "origin", "main"], cwd=ROOT, check=False)
+        if subprocess.run(["git", "push"], cwd=ROOT).returncode == 0:
+            return
+        time.sleep(5)
+    raise RuntimeError("git_publish: push failed after retries")
 
 
 # --------------------------------------------------------------------------- #
@@ -260,11 +277,16 @@ def main() -> int:
     )
     download(obj_url, ROOT / obj_rel)
 
-    # 2) FILLER — continues today's object band (use its live Kie URL directly).
+    # 2) FILLER — continues the object band. Feed it only a THIN right-edge crop of
+    #    the band (published mid-run so Kie can fetch its raw URL), so the model
+    #    extends the seam instead of reproducing the whole band.
+    objedge_rel = f"output/{date_str}-objedge.png"
+    crop_right_edge(ROOT / obj_rel, ROOT / objedge_rel)
+    git_publish([obj_rel, objedge_rel], f"seam: {date_str} object edge")
     print("Generating the filler stretch…")
     fill_url = kie_generate(
         build_prompt(None, kind="filler", has_prev=True),
-        [obj_url], FILL_ASPECT, kie_key,
+        [raw_url(objedge_rel)], FILL_ASPECT, kie_key,
     )
     download(fill_url, ROOT / fill_rel)
 
