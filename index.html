@@ -51,18 +51,15 @@
   const track = document.getElementById('track');
   const countEl = document.getElementById('count');
 
-  const DAY = 86400;                 // secondi in un giorno
-  const SPEED_MULT = 1;              // 1 = tempo reale (un segmento-giorno si rivela in 24h)
-  const DEMO = true;                 // TRUE = scorre in loop per capire l'effetto; metti false in produzione
-  const DEMO_SECONDS = 40;           // durata di un giro completo in modalità DEMO
-  const RESUME_DELAY = 4000;         // ms: dopo il drag torna alla posizione "live"
+  const PX_PER_SEC = 20;             // velocità auto-scroll (lento, percepibile)
+  const RESUME_DELAY = 4000;         // ms: dopo il drag riprende l'auto-scroll
   const REFRESH_MS = 10 * 60 * 1000; // ricontrolla il manifest ogni 10 min
 
-  let anchors = [];   // [{t: epoch_sec, x: pixel}] — bande oggetto (ancorate al 09:00) + coda virtuale
-  let maxScroll = 0;
+  let seqWidth = 0;                  // larghezza di UNA sequenza (contenuto duplicato x2)
   let signature = '';
   let paused = false;
   let resumeTimer = null;
+  let lastTs = 0;
 
   function figureFor(slice) {
     const fig = document.createElement('figure');
@@ -82,48 +79,22 @@
     return fig;
   }
 
-  // Il contenuto è già generato; questa mappa tempo→pixel lo RIVELA lentamente:
-  // ogni banda oggetto è ancorata al suo 09:00, ogni segmento-giorno si scopre in 24h.
-  function measure(slices) {
-    anchors = [];
-    const figs = Array.from(track.children);
-    slices.forEach((s, i) => {
-      if (s.type === 'object' && s.anchor) {
-        const t = Date.parse(s.anchor) / 1000;
-        if (!isNaN(t)) anchors.push({ t, x: figs[i].offsetLeft });
-      }
-    });
-    if (anchors.length) {
-      const last = anchors[anchors.length - 1];
-      anchors.push({ t: last.t + DAY / SPEED_MULT, x: track.scrollWidth });
-    }
-    maxScroll = Math.max(0, track.scrollWidth - rail.clientWidth);
-  }
-
-  function pixelAt(nowSec) {
-    if (anchors.length === 0) return 0;
-    if (nowSec <= anchors[0].t) return anchors[0].x;
-    const end = anchors[anchors.length - 1];
-    if (nowSec >= end.t) return end.x;
-    for (let i = 0; i < anchors.length - 1; i++) {
-      const a = anchors[i], b = anchors[i + 1];
-      if (nowSec >= a.t && nowSec < b.t) {
-        return a.x + (b.x - a.x) * (nowSec - a.t) / (b.t - a.t);
-      }
-    }
-    return end.x;
-  }
+  function measure() { seqWidth = track.scrollWidth / 2; }
 
   function build(slices) {
     track.innerHTML = '';
-    for (const s of slices) track.append(figureFor(s));
+    // Due copie identiche → bordo invisibile: quando lo scroll supera una
+    // sequenza si torna indietro di seqWidth, senza stacco visibile.
+    for (let copy = 0; copy < 2; copy++) {
+      for (const s of slices) track.append(figureFor(s));
+    }
     const objects = slices.filter(s => s.type === 'object').length;
     countEl.textContent = objects + (objects === 1 ? ' giorno' : ' giorni');
 
     const imgs = Array.from(track.querySelectorAll('img'));
     let left = imgs.length;
-    if (left === 0) { measure(slices); return; }
-    const done = () => { if (--left === 0) measure(slices); };
+    if (left === 0) { measure(); return; }
+    const done = () => { if (--left === 0) measure(); };
     for (const im of imgs) {
       if (im.complete) done();
       else { im.addEventListener('load', done); im.addEventListener('error', done); }
@@ -151,21 +122,15 @@
     build(slices);
   }
 
-  const t0 = performance.now();
-  function tick() {
-    if (!paused) {
-      let target;
-      if (DEMO) {
-        // Loop lineare 0→maxScroll: contenuto che scivola a sinistra, nuovo da destra.
-        const f = ((performance.now() - t0) / 1000 % DEMO_SECONDS) / DEMO_SECONDS;
-        target = f * maxScroll;
-      } else if (anchors.length) {
-        // now-line = bordo destro → estrema destra del già-rivelato.
-        target = pixelAt(Date.now() / 1000) - rail.clientWidth;
-      } else {
-        target = 0;
-      }
-      rail.scrollLeft = Math.max(0, Math.min(maxScroll, target));
+  function tick(ts) {
+    if (!lastTs) lastTs = ts;
+    const dt = (ts - lastTs) / 1000;
+    lastTs = ts;
+    if (seqWidth > 0) {
+      if (!paused) rail.scrollLeft += PX_PER_SEC * dt;   // scorre a sinistra
+      // bordo invisibile: rientro perpetuo nell'auto-scroll
+      if (rail.scrollLeft >= seqWidth) rail.scrollLeft -= seqWidth;
+      else if (rail.scrollLeft < 0) rail.scrollLeft += seqWidth;
     }
     requestAnimationFrame(tick);
   }
@@ -179,7 +144,7 @@
   rail.addEventListener('wheel', () => { pause(); scheduleResume(); }, { passive: true });
   window.addEventListener('pointerup', scheduleResume);
   window.addEventListener('pointercancel', scheduleResume);
-  window.addEventListener('resize', () => { maxScroll = Math.max(0, track.scrollWidth - rail.clientWidth); });
+  window.addEventListener('resize', measure);
 
   (async () => {
     const first = await loadManifest();
@@ -190,7 +155,7 @@
     setInterval(async () => {
       const slices = await loadManifest();
       const sig = slices.map(s => s.file).join(',');
-      if (sig !== signature) { signature = sig; render(slices); }
+      if (sig !== signature) { signature = sig; const keep = rail.scrollLeft; render(slices); rail.scrollLeft = keep; }
     }, REFRESH_MS);
   })();
 })();
