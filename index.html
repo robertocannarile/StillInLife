@@ -55,7 +55,7 @@
   const RESUME_DELAY = 4000;         // ms: dopo il drag riprende l'auto-scroll
   const REFRESH_MS = 10 * 60 * 1000; // ricontrolla il manifest ogni 10 min
 
-  let seqWidth = 0;                  // larghezza di UNA sequenza (contenuto duplicato x2)
+  let maxScroll = 0;
   let signature = '';
   let paused = false;
   let resumeTimer = null;
@@ -79,15 +79,12 @@
     return fig;
   }
 
-  function measure() { seqWidth = track.scrollWidth / 2; }
+  function measure() { maxScroll = Math.max(0, track.scrollWidth - rail.clientWidth); }
 
   function build(slices) {
     track.innerHTML = '';
-    // Due copie identiche → bordo invisibile: quando lo scroll supera una
-    // sequenza si torna indietro di seqWidth, senza stacco visibile.
-    for (let copy = 0; copy < 2; copy++) {
-      for (const s of slices) track.append(figureFor(s));
-    }
+    // Contenuto singolo, nessun doppione.
+    for (const s of slices) track.append(figureFor(s));
     const objects = slices.filter(s => s.type === 'object').length;
     countEl.textContent = objects + (objects === 1 ? ' giorno' : ' giorni');
 
@@ -126,11 +123,9 @@
     if (!lastTs) lastTs = ts;
     const dt = (ts - lastTs) / 1000;
     lastTs = ts;
-    if (seqWidth > 0) {
-      if (!paused) rail.scrollLeft += PX_PER_SEC * dt;   // scorre a sinistra
-      // bordo invisibile: rientro perpetuo nell'auto-scroll
-      if (rail.scrollLeft >= seqWidth) rail.scrollLeft -= seqWidth;
-      else if (rail.scrollLeft < 0) rail.scrollLeft += seqWidth;
+    if (maxScroll > 0 && !paused) {
+      rail.scrollLeft += PX_PER_SEC * dt;                 // scorre a sinistra
+      if (rail.scrollLeft >= maxScroll) rail.scrollLeft = 0; // bordo: rientra e riprende l'auto-scroll
     }
     requestAnimationFrame(tick);
   }
