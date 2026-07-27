@@ -50,8 +50,17 @@
   const rail = document.getElementById('rail');
   const track = document.getElementById('track');
   const countEl = document.getElementById('count');
+
+  const DAY = 86400;                 // secondi in un giorno
+  const SPEED_MULT = 1;              // 1 = tempo reale (un segmento-giorno si rivela in 24h)
+  const RESUME_DELAY = 4000;         // ms: dopo il drag torna alla posizione "live"
   const REFRESH_MS = 10 * 60 * 1000; // ricontrolla il manifest ogni 10 min
+
+  let anchors = [];   // [{t: epoch_sec, x: pixel}] — bande oggetto (ancorate al 09:00) + coda virtuale
+  let maxScroll = 0;
   let signature = '';
+  let paused = false;
+  let resumeTimer = null;
 
   function figureFor(slice) {
     const fig = document.createElement('figure');
@@ -71,9 +80,36 @@
     return fig;
   }
 
-  // Porta la vista all'estrema destra = la fetta più recente.
-  function toRight() {
-    rail.scrollLeft = track.scrollWidth; // clampato dal browser al massimo
+  // Il contenuto è già generato; questa mappa tempo→pixel lo RIVELA lentamente:
+  // ogni banda oggetto è ancorata al suo 09:00, ogni segmento-giorno si scopre in 24h.
+  function measure(slices) {
+    anchors = [];
+    const figs = Array.from(track.children);
+    slices.forEach((s, i) => {
+      if (s.type === 'object' && s.anchor) {
+        const t = Date.parse(s.anchor) / 1000;
+        if (!isNaN(t)) anchors.push({ t, x: figs[i].offsetLeft });
+      }
+    });
+    if (anchors.length) {
+      const last = anchors[anchors.length - 1];
+      anchors.push({ t: last.t + DAY / SPEED_MULT, x: track.scrollWidth });
+    }
+    maxScroll = Math.max(0, track.scrollWidth - rail.clientWidth);
+  }
+
+  function pixelAt(nowSec) {
+    if (anchors.length === 0) return 0;
+    if (nowSec <= anchors[0].t) return anchors[0].x;
+    const end = anchors[anchors.length - 1];
+    if (nowSec >= end.t) return end.x;
+    for (let i = 0; i < anchors.length - 1; i++) {
+      const a = anchors[i], b = anchors[i + 1];
+      if (nowSec >= a.t && nowSec < b.t) {
+        return a.x + (b.x - a.x) * (nowSec - a.t) / (b.t - a.t);
+      }
+    }
+    return end.x;
   }
 
   function build(slices) {
@@ -84,8 +120,8 @@
 
     const imgs = Array.from(track.querySelectorAll('img'));
     let left = imgs.length;
-    const done = () => { if (--left <= 0) toRight(); };
-    if (imgs.length === 0) { toRight(); return; }
+    if (left === 0) { measure(slices); return; }
+    const done = () => { if (--left === 0) measure(slices); };
     for (const im of imgs) {
       if (im.complete) done();
       else { im.addEventListener('load', done); im.addEventListener('error', done); }
@@ -113,12 +149,32 @@
     build(slices);
   }
 
+  function tick() {
+    if (!paused && anchors.length) {
+      // now-line = bordo destro → parti sempre dall'estrema destra del già-rivelato.
+      const target = pixelAt(Date.now() / 1000) - rail.clientWidth;
+      rail.scrollLeft = Math.max(0, Math.min(maxScroll, target));
+    }
+    requestAnimationFrame(tick);
+  }
+
+  const pause = () => { paused = true; if (resumeTimer) clearTimeout(resumeTimer); };
+  const scheduleResume = () => {
+    if (resumeTimer) clearTimeout(resumeTimer);
+    resumeTimer = setTimeout(() => { paused = false; }, RESUME_DELAY);
+  };
+  rail.addEventListener('pointerdown', pause);
+  rail.addEventListener('wheel', () => { pause(); scheduleResume(); }, { passive: true });
+  window.addEventListener('pointerup', scheduleResume);
+  window.addEventListener('pointercancel', scheduleResume);
+  window.addEventListener('resize', () => { maxScroll = Math.max(0, track.scrollWidth - rail.clientWidth); });
+
   (async () => {
     const first = await loadManifest();
     signature = first.map(s => s.file).join(',');
     render(first);
+    requestAnimationFrame(tick);
 
-    // Quando arriva una fetta nuova, riporta la vista all'estrema destra.
     setInterval(async () => {
       const slices = await loadManifest();
       const sig = slices.map(s => s.file).join(',');
