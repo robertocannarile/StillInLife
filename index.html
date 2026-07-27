@@ -53,6 +53,8 @@
 
   const DAY = 86400;                 // secondi in un giorno
   const SPEED_MULT = 1;              // 1 = tempo reale (un segmento-giorno si rivela in 24h)
+  const DEMO = true;                 // TRUE = scorre in loop per capire l'effetto; metti false in produzione
+  const DEMO_SECONDS = 40;           // durata di un giro completo in modalità DEMO
   const RESUME_DELAY = 4000;         // ms: dopo il drag torna alla posizione "live"
   const REFRESH_MS = 10 * 60 * 1000; // ricontrolla il manifest ogni 10 min
 
@@ -149,10 +151,20 @@
     build(slices);
   }
 
+  const t0 = performance.now();
   function tick() {
-    if (!paused && anchors.length) {
-      // now-line = bordo destro → parti sempre dall'estrema destra del già-rivelato.
-      const target = pixelAt(Date.now() / 1000) - rail.clientWidth;
+    if (!paused) {
+      let target;
+      if (DEMO) {
+        // Loop lineare 0→maxScroll: contenuto che scivola a sinistra, nuovo da destra.
+        const f = ((performance.now() - t0) / 1000 % DEMO_SECONDS) / DEMO_SECONDS;
+        target = f * maxScroll;
+      } else if (anchors.length) {
+        // now-line = bordo destro → estrema destra del già-rivelato.
+        target = pixelAt(Date.now() / 1000) - rail.clientWidth;
+      } else {
+        target = 0;
+      }
       rail.scrollLeft = Math.max(0, Math.min(maxScroll, target));
     }
     requestAnimationFrame(tick);
