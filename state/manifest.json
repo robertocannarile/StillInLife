@@ -18,5 +18,25 @@
     "object": "",
     "symbolism": "",
     "headline": ""
+  },
+  {
+    "seq": 2,
+    "date": "2026-08-08",
+    "file": "output/2026-08-08-obj.png",
+    "type": "object",
+    "anchor": "2026-08-08T09:00:00+02:00",
+    "object": "A mercury thermometer, fractured and leaking",
+    "symbolism": "La calamità del caldo estremo: 26 giorni di bollini rossi che spezzano il termometro della sopportazione umana. Il mercurio fuoriuscente rappresenta il superamento dei limiti naturali e la perdita di controllo sul clima.",
+    "headline": "Altri 10 giorni di caldo estremo su Italia: 26 bollini rossi - Sky TG24"
+  },
+  {
+    "seq": 3,
+    "date": "2026-08-08",
+    "file": "output/2026-08-08-fill.png",
+    "type": "filler",
+    "edge": "output/2026-08-08-edge.png",
+    "object": "",
+    "symbolism": "",
+    "headline": ""
   }
 ]
