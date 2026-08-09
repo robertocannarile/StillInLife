@@ -38,5 +38,25 @@
     "object": "",
     "symbolism": "",
     "headline": ""
+  },
+  {
+    "seq": 4,
+    "date": "2026-08-09",
+    "file": "output/2026-08-09-obj.png",
+    "type": "object",
+    "anchor": "2026-08-09T09:00:00+02:00",
+    "object": "a broken bicycle wheel",
+    "symbolism": "L'automobilista che ha travolto i ciclisti ripetutamente—la violenza stradale come metafora di una società fuori controllo, il corpo urbano devastato.",
+    "headline": "Automobilista ha travolto i ciclisti e poi li ha investiti di nuovo"
+  },
+  {
+    "seq": 5,
+    "date": "2026-08-09",
+    "file": "output/2026-08-09-fill.png",
+    "type": "filler",
+    "edge": "output/2026-08-09-edge.png",
+    "object": "",
+    "symbolism": "",
+    "headline": ""
   }
 ]
