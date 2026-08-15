@@ -58,5 +58,25 @@
     "object": "",
     "symbolism": "",
     "headline": ""
+  },
+  {
+    "seq": 6,
+    "date": "2026-08-15",
+    "file": "output/2026-08-15-obj.png",
+    "type": "object",
+    "anchor": "2026-08-15T09:00:00+02:00",
+    "object": "A dome of ash-covered stone",
+    "symbolism": "L'eruzione dell'Etna interrompe i voli e paralizza i trasporti: la natura ingovernabile che arresta il sistema.",
+    "headline": "Eruzione dell'Etna, ripristinati dopo alcune ore i voli all'aeroporto di Comiso - Tgcom24"
+  },
+  {
+    "seq": 7,
+    "date": "2026-08-15",
+    "file": "output/2026-08-15-fill.png",
+    "type": "filler",
+    "edge": "output/2026-08-15-edge.png",
+    "object": "",
+    "symbolism": "",
+    "headline": ""
   }
 ]
