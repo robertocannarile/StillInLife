@@ -78,5 +78,25 @@
     "object": "",
     "symbolism": "",
     "headline": ""
+  },
+  {
+    "seq": 8,
+    "date": "2026-08-16",
+    "file": "output/2026-08-16-obj.png",
+    "type": "object",
+    "anchor": "2026-08-16T09:00:00+02:00",
+    "object": "A obsidian shard from a volcano",
+    "symbolism": "L'eruzione dell'Etna e i terremoti in cascata oggi — un momento di sconvolgimento geologico che attraversa la penisola, da Flores a Catania a Massa Carrara. La scheggia d'ossidiana è un frammento del caos naturale, il ricordo tangibile di quando la terra non obbedisce.",
+    "headline": "Etna, l'eruzione cala: riapre aeroporto di Catania. Terremoto 3.9 - AGI"
+  },
+  {
+    "seq": 9,
+    "date": "2026-08-16",
+    "file": "output/2026-08-16-fill.png",
+    "type": "filler",
+    "edge": "output/2026-08-16-edge.png",
+    "object": "",
+    "symbolism": "",
+    "headline": ""
   }
 ]
