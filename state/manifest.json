@@ -98,5 +98,25 @@
     "object": "",
     "symbolism": "",
     "headline": ""
+  },
+  {
+    "seq": 10,
+    "date": "2026-08-17",
+    "file": "output/2026-08-17-obj.png",
+    "type": "object",
+    "anchor": "2026-08-17T09:00:00+02:00",
+    "object": "A cracked water pitcher, bone-dry and fissured",
+    "symbolism": "Pesaro's water crisis: the city's essential resource drained away, leaving only thirst and desperation behind.",
+    "headline": "Pesaro senz'acqua, scoppia il caos: code alle autobotti, locali chiusi e turisti in fuga"
+  },
+  {
+    "seq": 11,
+    "date": "2026-08-17",
+    "file": "output/2026-08-17-fill.png",
+    "type": "filler",
+    "edge": "output/2026-08-17-edge.png",
+    "object": "",
+    "symbolism": "",
+    "headline": ""
   }
 ]
