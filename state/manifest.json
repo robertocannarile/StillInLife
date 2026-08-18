@@ -118,5 +118,25 @@
     "object": "",
     "symbolism": "",
     "headline": ""
+  },
+  {
+    "seq": 12,
+    "date": "2026-08-18",
+    "file": "output/2026-08-18-obj.png",
+    "type": "object",
+    "anchor": "2026-08-18T09:00:00+02:00",
+    "object": "A child's wooden toy soldier, painted white, headless and splintered",
+    "symbolism": "La violenza senseless che irrompe in vite ordinarie—dal femminicidio di Camponogara ai colpi di pistola al pronto soccorso, fino alla tragedia stradale di Alberto. Un giocattolo innocente mutilato, simbolo di vite spezzate e innocenza persa.",
+    "headline": "Femminicidio-suicidio a Camponogara, uccide la ex fidanzata e poi si toglie la vita: ad aprile aveva già tentato di strangolarla"
+  },
+  {
+    "seq": 13,
+    "date": "2026-08-18",
+    "file": "output/2026-08-18-fill.png",
+    "type": "filler",
+    "edge": "output/2026-08-18-edge.png",
+    "object": "",
+    "symbolism": "",
+    "headline": ""
   }
 ]
