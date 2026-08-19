@@ -138,5 +138,25 @@
     "object": "",
     "symbolism": "",
     "headline": ""
+  },
+  {
+    "seq": 14,
+    "date": "2026-08-19",
+    "file": "output/2026-08-19-obj.png",
+    "type": "object",
+    "anchor": "2026-08-19T09:00:00+02:00",
+    "object": "A bronze bridle, twisted and severed at the bit",
+    "symbolism": "Il Palio di Siena—cavallo e fantino, vittoria e caduta nell'istante stesso. La briglia spezzata rappresenta il controllo perduto, la celebrazione che diventa disastro sul tufo.",
+    "headline": "Palio di Siena, Tittia porta alla vittoria anche il Nicchio (dopo 28 anni). Poi lo scontro e la caduta sul tufo - Corriere Fiorentino"
+  },
+  {
+    "seq": 15,
+    "date": "2026-08-19",
+    "file": "output/2026-08-19-fill.png",
+    "type": "filler",
+    "edge": "output/2026-08-19-edge.png",
+    "object": "",
+    "symbolism": "",
+    "headline": ""
   }
 ]
