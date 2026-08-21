@@ -158,5 +158,25 @@
     "object": "",
     "symbolism": "",
     "headline": ""
+  },
+  {
+    "seq": 16,
+    "date": "2026-08-21",
+    "file": "output/2026-08-21-obj.png",
+    "type": "object",
+    "anchor": "2026-08-21T09:00:00+02:00",
+    "object": "A fractured bridge stone, half-submerged in dark water",
+    "symbolism": "Il crollo del ponte di Sonico e l'evacuazione delle comunità alpine — l'infrastruttura distrutta come memento della fragilità umana di fronte alla natura.",
+    "headline": "Grave ondata di maltempo in Valcamonica: crolla il ponte di Sonico, evacuati gli abitanti di Rino e Vione"
+  },
+  {
+    "seq": 17,
+    "date": "2026-08-21",
+    "file": "output/2026-08-21-fill.png",
+    "type": "filler",
+    "edge": "output/2026-08-21-edge.png",
+    "object": "",
+    "symbolism": "",
+    "headline": ""
   }
 ]
