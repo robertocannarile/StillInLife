@@ -178,5 +178,25 @@
     "object": "",
     "symbolism": "",
     "headline": ""
+  },
+  {
+    "seq": 18,
+    "date": "2026-08-22",
+    "file": "output/2026-08-22-obj.png",
+    "type": "object",
+    "anchor": "2026-08-22T09:00:00+02:00",
+    "object": "A customs barrier post, splintered and toppled",
+    "symbolism": "I dazi reciproci del 50% tra USA e Canada creano una barriera commerciale che crolla e si ribalta—il confine stesso diventa oggetto di rovina.",
+    "headline": "Niente accordo Usa-Canada, scattano dazi reciproci del 50% - ANSA"
+  },
+  {
+    "seq": 19,
+    "date": "2026-08-22",
+    "file": "output/2026-08-22-fill.png",
+    "type": "filler",
+    "edge": "output/2026-08-22-edge.png",
+    "object": "",
+    "symbolism": "",
+    "headline": ""
   }
 ]
