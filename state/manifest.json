@@ -198,5 +198,25 @@
     "object": "",
     "symbolism": "",
     "headline": ""
+  },
+  {
+    "seq": 20,
+    "date": "2026-08-23",
+    "file": "output/2026-08-23-obj.png",
+    "type": "object",
+    "anchor": "2026-08-23T09:00:00+02:00",
+    "object": "A fractured hourglass with blackened sand",
+    "symbolism": "Il blocco e l'immobilismo nei conflitti internazionali: né una visione né l'altra avanza, il tempo si ferma in stallo mentre la sabbia si oscura. Rappresenta l'impasse tra Iran e USA, l'impossibilità di movimento, il tempo avvelenato della guerra.",
+    "headline": "Stallo Usa-Iran. Teheran: 'Nemici i Paesi che ci sanzionano'. LIVE - Sky TG24"
+  },
+  {
+    "seq": 21,
+    "date": "2026-08-23",
+    "file": "output/2026-08-23-fill.png",
+    "type": "filler",
+    "edge": "output/2026-08-23-edge.png",
+    "object": "",
+    "symbolism": "",
+    "headline": ""
   }
 ]
