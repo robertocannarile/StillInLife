@@ -218,5 +218,25 @@
     "object": "",
     "symbolism": "",
     "headline": ""
+  },
+  {
+    "seq": 22,
+    "date": "2026-08-24",
+    "file": "output/2026-08-24-obj.png",
+    "type": "object",
+    "anchor": "2026-08-24T09:00:00+02:00",
+    "object": "A burned toy drone, wings singed and detached",
+    "symbolism": "Il drone abbattuto rappresenta la violenza della guerra che penetra gli spazi civili—l'asilo, il gioco dei bambini, l'innocenza distrutta. Un oggetto futuristico ridotto a detrito, come un memento mori contemporaneo.",
+    "headline": "Detriti di droni ucraini su un asilo della città russa di Krasnodar, morti 2 bambini - ANSA"
+  },
+  {
+    "seq": 23,
+    "date": "2026-08-24",
+    "file": "output/2026-08-24-fill.png",
+    "type": "filler",
+    "edge": "output/2026-08-24-edge.png",
+    "object": "",
+    "symbolism": "",
+    "headline": ""
   }
 ]
