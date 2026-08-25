@@ -238,5 +238,25 @@
     "object": "",
     "symbolism": "",
     "headline": ""
+  },
+  {
+    "seq": 24,
+    "date": "2026-08-25",
+    "file": "output/2026-08-25-obj.png",
+    "type": "object",
+    "anchor": "2026-08-25T09:00:00+02:00",
+    "object": "A pair of wire-rimmed spectacles, lenses shattered and frame bent",
+    "symbolism": "La rimozione di Ranucci da Report rappresenta una perdita di chiarezza e visione critica, le lenti rotte simboleggiano l'offuscamento dell'informazione e il tradimento della funzione di controllo del giornalismo.",
+    "headline": "La Rai rimuove Ranucci da Report: \"Al suo posto non un marziano\" - la Repubblica"
+  },
+  {
+    "seq": 25,
+    "date": "2026-08-25",
+    "file": "output/2026-08-25-fill.png",
+    "type": "filler",
+    "edge": "output/2026-08-25-edge.png",
+    "object": "",
+    "symbolism": "",
+    "headline": ""
   }
 ]
